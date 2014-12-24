@@ -2,12 +2,15 @@
 """
     Coinkit
     ~~~~~
-    
+
     :copyright: (c) 2014 by Halfmoon Labs
     :license: MIT, see LICENSE for more details.
 """
 
-import os, json, hashlib, ecdsa
+import os
+import json
+import hashlib
+import ecdsa
 from binascii import hexlify, unhexlify
 from ecdsa.keys import VerifyingKey
 from pybitcointools import decompress, compress, pubkey_to_address
@@ -21,14 +24,17 @@ from .address import bin_hash160_to_address
 
 PUBKEY_MAGIC_BYTE = '\x04'
 
+
 class CharEncoding():
     hex = 16
     bin = 256
+
 
 class PubkeyType():
     ecdsa = 1
     uncompressed = 2
     compressed = 3
+
 
 def get_public_key_format(public_key_string):
     if not isinstance(public_key_string, str):
@@ -36,20 +42,23 @@ def get_public_key_format(public_key_string):
 
     if len(public_key_string) == 64:
         return CharEncoding.bin, PubkeyType.ecdsa
-    if len(public_key_string) == 65 and public_key_string[0] == PUBKEY_MAGIC_BYTE:
+    if (len(public_key_string) == 65
+            and public_key_string[0] == PUBKEY_MAGIC_BYTE):
         return CharEncoding.bin, PubkeyType.uncompressed
     if len(public_key_string) == 33:
         return CharEncoding.bin, PubkeyType.compressed
-    
+
     if is_hex(public_key_string):
         if len(public_key_string) == 128:
             return CharEncoding.hex, PubkeyType.ecdsa
-        if len(public_key_string) == 130 and public_key_string[0:2] == hexlify(PUBKEY_MAGIC_BYTE):
+        if (len(public_key_string) == 130
+                and public_key_string[0:2] == hexlify(PUBKEY_MAGIC_BYTE)):
             return CharEncoding.hex, PubkeyType.uncompressed
         if len(public_key_string) == 66:
             return CharEncoding.hex, PubkeyType.compressed
 
     raise ValueError(_errors['IMPROPER_PUBLIC_KEY_FORMAT'])
+
 
 def extract_bin_ecdsa_pubkey(public_key):
     key_charencoding, key_type = get_public_key_format(public_key)
@@ -70,6 +79,7 @@ def extract_bin_ecdsa_pubkey(public_key):
     else:
         raise ValueError(_errors['IMPROPER_PUBLIC_KEY_FORMAT'])
 
+
 def extract_bin_bitcoin_pubkey(public_key):
     key_charencoding, key_type = get_public_key_format(public_key)
 
@@ -89,6 +99,7 @@ def extract_bin_bitcoin_pubkey(public_key):
     else:
         raise ValueError(_errors['IMPROPER_PUBLIC_KEY_FORMAT'])
 
+
 class BitcoinPublicKey():
     _curve = ecdsa.curves.SECP256k1
     _version_byte = 0
@@ -102,11 +113,13 @@ class BitcoinPublicKey():
         """
         # set the version byte
         self._version_byte = version_byte
-        self._charencoding, self._type = get_public_key_format(public_key_string)
+        self._charencoding, self._type = get_public_key_format(
+            public_key_string)
 
-        # extract the binary bitcoin key (compressed or uncompressed w/ magic byte)
+        # extract the binary bitcoin key (compressed or uncompressed w/ magic
+        # byte)
         self._bin_public_key = extract_bin_bitcoin_pubkey(public_key_string)
-        
+
         # extract the bin ecdsa public key (uncompressed, w/out a magic byte)
         bin_ecdsa_public_key = extract_bin_ecdsa_pubkey(public_key_string)
         if verify:
@@ -135,8 +148,10 @@ class BitcoinPublicKey():
         return bin_hash160_to_address(self.bin_hash160(),
                                       version_byte=self._version_byte)
 
+
 class LitecoinPublicKey(BitcoinPublicKey):
     _version_byte = 48
+
 
 class NamecoinPublicKey(BitcoinPublicKey):
     _version_byte = 52
